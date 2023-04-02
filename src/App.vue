@@ -9,15 +9,17 @@
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-import NavBar from './components/NavBar.vue'
-import Cards from './components/Cards.vue'
+import HelloWorld from './components/HelloWorld.vue';
+import NavBar from './components/NavBar.vue';
+import Cards from './components/Cards.vue';
+import Favorites from './components/Favorites.vue';
 export default {
   name: 'App',
   components: {
     HelloWorld,
     NavBar,
     Cards,
+    Favorites,
   }
 }
 </script>
@@ -31,5 +33,7 @@ export default {
   color: #2c3e50;
   margin: 0;
   padding: 0;
+  background-image: url('./assets/start.jpeg');
+  background-repeat: repeat;
 }
 </style>

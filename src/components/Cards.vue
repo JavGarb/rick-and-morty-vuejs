@@ -1,28 +1,39 @@
 <template>
   <div>
     <div>
+      <button @click="showFavoritesModal = true">Ver Favoritos</button>
       <p>Pagina: {{ count }}</p>
       <button @click="decrement">Anterior</button>
       <button @click="increment">Siguiente</button>
+      <favorites
+        :favorites="favorites"
+        v-if="showFavoritesModal"
+        :showFavoritesModal="showFavoritesModal"
+        @update:showFavoritesModal="showFavoritesModal = $event"
+      ></favorites>
     </div>
-    <transition name="fade" mode ="out-in">
-    <div class="contenedor">
-      <div
-        v-for="character in characters"
-        :key="character.id"
-        class="cards"
-        
-      >
-        <img @click="showDetails(character)" :src="character?.image" :alt="character?.name" class="image"/>
-        <h3>{{ character?.name }}</h3>
-        <p>{{ character?.status }}</p>
-        <button @click="changeFavorite(character)">
-          <span v-if="!character.isFavorite">NO Favorite💔</span>
-          <span v-else>Favorite 💖</span>
-        </button>
+    <transition name="fade" mode="out-in">
+      <div class="contenedor">
+        <div v-for="character in characters" :key="character.id" class="cards">
+          <img
+            @click="showDetails(character)"
+            :src="character?.image"
+            :alt="character?.name"
+            class="image"
+          />
+          <h3>{{ character?.name }}</h3>
+          <p>{{ character?.status }}</p>
+          <button
+            @click="changeFavorite(character)"
+            class="btnFav"
+            :class="{ favorite: character.isFavorite }"
+          >
+            <span v-if="!character.isFavorite">NO Favorite💔</span>
+            <span v-else>Favorite 💖</span>
+          </button>
+        </div>
       </div>
-    </div>
-  </transition>
+    </transition>
     <div>
       <p>Pagina: {{ contador }}</p>
       <button @click="decrement">Anterior</button>
@@ -48,9 +59,13 @@
 
 <script>
 import axios from "axios";
+import Favorites from "./Favorites.vue";
 
 export default {
   name: "Cards",
+  components: {
+    Favorites,
+  },
   data() {
     return {
       characters: [],
@@ -58,52 +73,63 @@ export default {
       showModal: false,
       selectedCharacter: {},
       favorites: [],
+      showFavoritesModal: false,
     };
   },
 
   methods: {
-    changeFavorite(character) {
-      character.isFavorite = !character.isFavorite;
-      if (character.isFavorite) {
-        this.addfavorites(character);
-      } else {
-        const index = this.favorites.findIndex(
-          (char) => char.id === character.id
-        );
-        if (index !== -1) this.favorites.splice(index, 1);
+    async getCharacters() {
+      try {
+        const response = await axios.get(`https://rickandmortyapi.com/api/character/?page=${this.count}`);
+        this.characters = response.data.results.map((c) => {
+          return { ...c, isFavorite: false };
+        });
+        this.checkFavorites();
+      } catch (error) {
+        console.error(error);
       }
     },
-    addfavorites(character) {
-      this.favorites.push(character);
+    increment() {
+      this.count++;
+      this.getCharacters();
+    },
+    decrement() {
+      if (this.count > 1) {
+        this.count--;
+        this.getCharacters();
+      }
     },
     showDetails(character) {
       this.selectedCharacter = character;
       this.showModal = true;
     },
-    increment() {
-      this.count++;
-      this.getData();
-    },
-    decrement() {
-      if (this.count > 1) {
-        this.count--;
-        this.getData();
+    changeFavorite(character) {
+      character.isFavorite = !character.isFavorite;
+      if (character.isFavorite) {
+        this.favorites.push(character);
+      } else {
+        const index = this.favorites.findIndex((c) => c.id === character.id);
+        this.favorites.splice(index, 1);
       }
+      localStorage.setItem("favorites", JSON.stringify(this.favorites));
     },
-    getData() {
-      axios
-        .get("https://rickandmortyapi.com/api/character?page=" + this.count)
-        .then((response) => {
-          this.characters = response.data.results.map((c) => {
-            return { ...c, isFavorite: false };
-          });
-        })
-        .catch((error) => console.log(error));
+    checkFavorites() {
+      this.characters.forEach((character) => {
+        const index = this.favorites.findIndex((c) => c.id === character.id);
+        if (index !== -1) {
+          character.isFavorite = true;
+        } else {
+          character.isFavorite = false;
+        }
+      });
     },
   },
-
   mounted() {
-    this.getData();
+    const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    this.favorites = favorites.map((c) => {
+      return { ...c, isFavorite: true };
+    });
+    this.getCharacters();
   },
 };
 </script>
@@ -116,10 +142,19 @@ export default {
   flex-direction: row;
   padding: 10%;
 }
+.btnFav:hover {
+  color: beige;
+  background-color: blue;
+  transform: scale(1.2);
+}
+.btnFav {
+  color: black;
+  background-color: grey;
+}
 .cards {
-  border: 1px solid black;
   width: max-content;
   margin: 10px;
+  color: cyan;
 }
 
 .modal {
@@ -142,15 +177,21 @@ export default {
   text-align: center;
 }
 
-.image:hover{
+.image:hover {
   box-shadow: 0px 0px 20px blue;
 }
+.btnFav.favorite {
+  box-shadow: 0px 0px 20px yellow;
+  background-color: orange;
+}
 
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.5s;
 }
 
-.fade-enter, .fade-leave-to {
+.fade-enter,
+.fade-leave-to {
   opacity: 0;
 }
 </style>
