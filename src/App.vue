@@ -36,4 +36,11 @@ export default {
   background-image: url('./assets/start.jpeg');
   background-repeat: repeat;
 }
+
+body{
+ padding: 0;
+ margin: 0;
+ max-width: 100vw;
+ overflow-x: hidden;
+}
 </style>
